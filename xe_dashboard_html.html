@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản trị xe – Vinaconex</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f7f6f2;color:#1a1a18;font-size:14px;line-height:1.5}
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:#1a1a18;color:#d3d1c7;display:flex;flex-direction:column}
+.logo{padding:24px 20px 20px;border-bottom:0.5px solid rgba(255,255,255,.08)}
+.logo-title{font-size:15px;font-weight:600;color:#fff}
+.logo-sub{font-size:11px;color:#888780;margin-top:2px}
+.nav{padding:16px 0;flex:1}
+.nav-section{font-size:10px;font-weight:600;letter-spacing:.07em;color:#5f5e5a;padding:8px 20px 4px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;font-size:13px;color:#888780;cursor:pointer;border-left:2px solid transparent;transition:all .15s}
+.nav-item:hover{color:#d3d1c7;background:rgba(255,255,255,.04)}
+.nav-item.active{color:#fff;background:rgba(255,255,255,.07);border-left-color:#378ADD}
+.nav-icon{width:16px;height:16px;opacity:.7;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.sidebar-footer{padding:16px 20px;border-top:0.5px solid rgba(255,255,255,.08);font-size:11px;color:#5f5e5a}
+.main{overflow-y:auto}
+.topbar{background:#fff;border-bottom:0.5px solid rgba(0,0,0,.08);padding:16px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.topbar h1{font-size:17px;font-weight:600}
+.topbar p{font-size:12px;color:#888780;margin-top:1px}
+.topbar-right{display:flex;gap:10px;align-items:center}
+.btn{font-size:12px;padding:6px 14px;border:0.5px solid rgba(0,0,0,.18);border-radius:8px;background:#fff;cursor:pointer;color:#1a1a18;transition:background .15s}
+.btn:hover{background:#f4f4f0}
+.btn-primary{background:#1a1a18;color:#fff;border-color:#1a1a18}
+.btn-primary:hover{background:#2c2c2a}
+select.filter{font-size:12px;padding:6px 12px;border:0.5px solid rgba(0,0,0,.18);border-radius:8px;background:#fff;cursor:pointer}
+.content{padding:24px 28px 48px}
+.tabs{display:flex;gap:2px;margin-bottom:22px;background:#f0efe9;border-radius:10px;padding:3px}
+.tab{padding:7px 18px;font-size:13px;font-weight:500;color:#888780;cursor:pointer;border-radius:8px;border:none;background:none;transition:all .15s}
+.tab:hover{color:#1a1a18}
+.tab.active{background:#fff;color:#1a1a18;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:22px}
+.kpi{background:#fff;border:0.5px solid rgba(0,0,0,.08);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden}
+.kpi-accent{position:absolute;top:0;left:0;width:3px;height:100%;border-radius:3px 0 0 3px}
+.kpi-label{font-size:11px;font-weight:500;color:#888780;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.kpi-value{font-size:26px;font-weight:600;line-height:1;margin-bottom:4px}
+.kpi-sub{font-size:11px;color:#888780}
+.kpi-trend{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:500;padding:2px 7px;border-radius:10px;margin-top:4px}
+.up{background:#eaf3de;color:#27500a}
+.dn{background:#fcebeb;color:#791f1f}
+.card{background:#fff;border:0.5px solid rgba(0,0,0,.08);border-radius:12px;padding:20px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600;color:#1a1a18}
+.card-sub{font-size:11px;color:#888780;margin-top:1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px}
+.mt16{margin-top:16px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:11px;font-weight:600;color:#888780;text-transform:uppercase;letter-spacing:.04em;padding:8px 12px;border-bottom:0.5px solid rgba(0,0,0,.08);text-align:left;white-space:nowrap}
+.tbl td{padding:10px 12px;border-bottom:0.5px solid rgba(0,0,0,.05);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr:hover td{background:#fafaf8}
+.badge{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px}
+.b-blue{background:#e6f1fb;color:#0c447c}
+.b-green{background:#eaf3de;color:#27500a}
+.b-amber{background:#faeeda;color:#633806}
+.b-red{background:#fcebeb;color:#791f1f}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.cal-wrap{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dow{font-size:10px;font-weight:600;color:#888780;text-align:center;padding:4px 0}
+.cal-cell{min-height:58px;background:#f7f6f2;border-radius:6px;padding:5px;font-size:10px;cursor:pointer;transition:background .12s}
+.cal-cell:hover{background:#eeeee8}
+.cal-cell.today{background:#e6f1fb}
+.cal-cell.empty{background:transparent;pointer-events:none}
+.cal-day{font-size:11px;font-weight:600;color:#888780;margin-bottom:2px}
+.cal-cell.today .cal-day{color:#0c447c}
+.trip-pill{border-radius:3px;padding:1px 4px;margin-bottom:2px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-blue{background:#e6f1fb;color:#0c447c}
+.tp-amber{background:#faeeda;color:#633806}
+.pbar{height:5px;background:#f1efe8;border-radius:3px;overflow:hidden;margin-top:5px}
+.pfill{height:100%;border-radius:3px;transition:width .5s}
+.xe-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid rgba(0,0,0,.06)}
+.xe-row:last-child{border-bottom:none}
+.star-row{display:flex;gap:1px}
+.s-full{color:#EF9F27;font-size:12px}
+.s-empty{color:#d3d1c7;font-size:12px}
+.driver-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid rgba(0,0,0,.06)}
+.driver-row:last-child{border-bottom:none}
+.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.donut-legend{display:flex;flex-direction:column;gap:8px}
+.dleg-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.dleg-sq{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pane{display:none}
+.pane.active{display:block}
+.divider{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid rgba(0,0,0,.08)}
+.tt{position:fixed;background:#1a1a18;color:#f4f4f0;font-size:12px;border-radius:8px;padding:10px 12px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:9999;min-width:200px;max-width:260px;line-height:1.6;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.tt.show{opacity:1}
+.tt-title{font-size:11px;font-weight:600;color:#fff;margin-bottom:6px;border-bottom:0.5px solid rgba(255,255,255,.15);padding-bottom:5px}
+.tt-row{display:flex;gap:6px;align-items:flex-start;margin-bottom:3px}
+.tt-label{font-size:10px;color:#888780;min-width:64px;flex-shrink:0}
+.tt-val{font-size:11px;font-weight:500;color:#d3d1c7}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-title">Fleet Manager</div>
+    <div class="logo-sub">Vinaconex · Văn phòng</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Tổng quan</div>
+    <div class="nav-item active" onclick="switchTab('lich',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 1v4M11 1v4M2 7h12"/></svg>
+      Lịch điều xe
+    </div>
+    <div class="nav-item" onclick="switchTab('chiphi',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12L6 8l3 3 5-6"/></svg>
+      Chi phí
+    </div>
+    <div class="nav-item" onclick="switchTab('danhgia',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.8 3.6L14 6.3l-3 2.9.7 4.1L8 11.2l-3.7 2.1.7-4.1-3-2.9 4.2-.7z"/></svg>
+      Đánh giá
+    </div>
+    <div class="nav-item" onclick="switchTab('hieuqua',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/><circle cx="8" cy="8" r="1" fill="currentColor" stroke="none"/></svg>
+      Hiệu quả xe
+    </div>
+  </nav>
+  <div class="sidebar-footer">Cập nhật 30/03/2026 · 08:42</div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div><h1>Báo cáo quản trị xe</h1><p>Tháng 3 · 2026</p></div>
+    <div class="topbar-right">
+      <select class="filter"><option>Tháng 3/2026</option><option>Tháng 2/2026</option><option>Tháng 1/2026</option></select>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-accent" style="background:#1D9E75"></div>
+        <div class="kpi-label">Xe sẵn sàng</div>
+        <div class="kpi-value" style="color:#0F6E56">4 <span style="font-size:16px;color:#888780">/ 7</span></div>
+        <div class="kpi-sub">3 xe đang điều động</div>
+      </div>
+      <div class="kpi"><div class="kpi-accent" style="background:#378ADD"></div>
+        <div class="kpi-label">Chuyến tháng 3</div>
+        <div class="kpi-value">84</div>
+        <div class="kpi-trend up">▲ 6% so T2</div>
+      </div>
+      <div class="kpi"><div class="kpi-accent" style="background:#7F77DD"></div>
+        <div class="kpi-label">Tổng km</div>
+        <div class="kpi-value">12.340</div>
+        <div class="kpi-sub">km trong tháng</div>
+      </div>
+      <div class="kpi"><div class="kpi-accent" style="background:#EF9F27"></div>
+        <div class="kpi-label">Đánh giá TB</div>
+        <div class="kpi-value">4.6 <span style="font-size:18px;color:#EF9F27">★</span></div>
+        <div class="kpi-sub">72 lượt đánh giá</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="t-lich"    onclick="switchTab('lich',this)">Lịch điều xe</button>
+      <button class="tab"        id="t-chiphi"  onclick="switchTab('chiphi',this)">Chi phí</button>
+      <button class="tab"        id="t-danhgia" onclick="switchTab('danhgia',this)">Đánh giá</button>
+      <button class="tab"        id="t-hieuqua" onclick="switchTab('hieuqua',this)">Hiệu quả xe</button>
+    </div>
+
+    <!-- LỊCH -->
+    <div class="pane active" id="pane-lich">
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header">
+          <div><div class="card-title">Số chuyến xe theo ngày</div><div class="card-sub">Tháng 3 · 2026</div></div>
+          <div style="display:flex;gap:12px;font-size:11px;color:#888780">
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:#378ADD;display:inline-block"></span>1 chuyến</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:#EF9F27;display:inline-block"></span>2 chuyến</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:#E24B4A;display:inline-block"></span>3+ chuyến</span>
+          </div>
+        </div>
+        <div style="position:relative;height:160px"><canvas id="chartTripsDay"></canvas></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 280px;gap:16px;margin-bottom:16px">
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Lịch tháng 3 · 2026</div></div>
+            <div style="display:flex;gap:10px;font-size:11px;color:#888780">
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:#e6f1fb;border:1px solid #b5d4f4;display:inline-block"></span>Đã duyệt</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:#faeeda;border:1px solid #fac775;display:inline-block"></span>Chờ duyệt</span>
+            </div>
+          </div>
+          <div class="cal-wrap" style="margin-bottom:4px">
+            <div class="cal-dow">T2</div><div class="cal-dow">T3</div><div class="cal-dow">T4</div>
+            <div class="cal-dow">T5</div><div class="cal-dow">T6</div>
+            <div class="cal-dow" style="color:#a32d2d">T7</div>
+            <div class="cal-dow" style="color:#a32d2d">CN</div>
+          </div>
+          <div class="cal-wrap" id="cal-grid"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-header" style="margin-bottom:12px"><div class="card-title">Trạng thái xe</div></div>
+            <div id="xe-status-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-header" style="margin-bottom:12px">
+              <div class="card-title">Chờ phê duyệt</div>
+              <span class="badge b-amber">3 phiếu</span>
+            </div>
+            <table class="tbl">
+              <thead><tr><th>Đơn vị</th><th>Ngày</th><th>Trạng thái</th></tr></thead>
+              <tbody>
+                <tr><td style="font-weight:500">P. KHTH</td><td>31/03</td><td><span class="badge b-amber">Chờ LĐ Ban</span></td></tr>
+                <tr><td style="font-weight:500">P. TCKT</td><td>01/04</td><td><span class="badge b-amber">Chờ VP</span></td></tr>
+                <tr><td style="font-weight:500">P. HCNS</td><td>02/04</td><td><span class="badge b-blue">Đã duyệt</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CHI PHÍ -->
+    <div class="pane" id="pane-chiphi">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-accent" style="background:#E24B4A"></div>
+          <div class="kpi-label">Tổng chi phí T3</div>
+          <div class="kpi-value">182 tr</div>
+          <div class="kpi-trend dn">▲ 4.2% vs T2</div>
+        </div>
+        <div class="kpi"><div class="kpi-accent" style="background:#378ADD"></div>
+          <div class="kpi-label">Xăng dầu</div>
+          <div class="kpi-value">94 tr</div>
+          <div class="kpi-sub">51.6% tổng chi</div>
+        </div>
+        <div class="kpi"><div class="kpi-accent" style="background:#1D9E75"></div>
+          <div class="kpi-label">Cầu đường / Gửi xe</div>
+          <div class="kpi-value">38 tr</div>
+          <div class="kpi-sub">20.9% tổng chi</div>
+        </div>
+        <div class="kpi"><div class="kpi-accent" style="background:#D85A30"></div>
+          <div class="kpi-label">Sửa chữa tổng</div>
+          <div class="kpi-value">50 tr</div>
+          <div class="kpi-sub">27.5% tổng chi</div>
+        </div>
+      </div>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">Chi phí 6 tháng gần nhất</div><div class="card-sub">Triệu đồng</div></div></div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;color:#888780">
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#378ADD;display:inline-block"></span>Xăng</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#1D9E75;display:inline-block"></span>Cầu đường</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#D85A30;display:inline-block"></span>Sửa chữa</span>
+          </div>
+          <div style="position:relative;height:220px"><canvas id="chartCost"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">Phân bổ chi phí T3</div><div class="card-sub">Theo loại</div></div></div>
+          <div class="donut-wrap" style="margin-top:8px">
+            <div style="position:relative;width:140px;height:140px;flex-shrink:0"><canvas id="chartDonut"></canvas></div>
+            <div class="donut-legend">
+              <div class="dleg-row"><span class="dleg-sq" style="background:#378ADD"></span><span>Xăng dầu<br><strong>94 tr · 51.6%</strong></span></div>
+              <div class="dleg-row"><span class="dleg-sq" style="background:#1D9E75"></span><span>Cầu đường<br><strong>38 tr · 20.9%</strong></span></div>
+              <div class="dleg-row"><span class="dleg-sq" style="background:#D85A30"></span><span>Sửa chữa<br><strong>50 tr · 27.5%</strong></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider">
+        <div style="width:3px;height:20px;background:#E24B4A;border-radius:2px"></div>
+        <span style="font-size:14px;font-weight:600">Phân tích sửa chữa</span>
+        <span style="font-size:12px;color:#888780">Định kỳ vs Đột xuất</span>
+      </div>
+
+      <div class="kpi-grid" style="margin-bottom:16px">
+        <div class="kpi"><div class="kpi-accent" style="background:#D85A30"></div>
+          <div class="kpi-label">Tổng sửa chữa T3</div>
+          <div class="kpi-value">50 tr</div>
+          <div class="kpi-sub">27.5% tổng chi phí</div>
+        </div>
+        <div class="kpi"><div class="kpi-accent" style="background:#1D9E75"></div>
+          <div class="kpi-label">Định kỳ</div>
+          <div class="kpi-value" style="color:#0F6E56">7.2 tr</div>
+          <div class="kpi-sub">14.4% chi sửa chữa</div>
+        </div>
+        <div class="kpi"><div class="kpi-accent" style="background:#E24B4A"></div>
+          <div class="kpi-label">Đột xuất</div>
+          <div class="kpi-value" style="color:#a32d2d">42.8 tr</div>
+          <div class="kpi-sub">85.6% chi sửa chữa</div>
+        </div>
+        <div class="kpi"><div class="kpi-accent" style="background:#7F77DD"></div>
+          <div class="kpi-label">Số lần đột xuất T3</div>
+          <div class="kpi-value">6 lần</div>
+          <div class="kpi-trend dn">▲ 2 lần so T2</div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">Xu hướng sửa chữa 6 tháng</div><div class="card-sub">Định kỳ vs Đột xuất (triệu đồng)</div></div></div>
+          <div style="display:flex;gap:14px;margin-bottom:10px;font-size:11px;color:#888780">
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#1D9E75;display:inline-block"></span>Định kỳ</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#E24B4A;display:inline-block"></span>Đột xuất</span>
+          </div>
+          <div style="position:relative;height:200px"><canvas id="chartRepairTrend"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">Đột xuất theo từng xe</div><div class="card-sub">Tích lũy 6 tháng (triệu đồng)</div></div></div>
+          <div style="display:flex;gap:14px;margin-bottom:10px;font-size:11px;color:#888780">
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#1D9E75;display:inline-block"></span>Định kỳ</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:2px;background:#E24B4A;display:inline-block"></span>Đột xuất</span>
+          </div>
+          <div style="position:relative;height:200px"><canvas id="chartRepairByXe"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header">
+          <div><div class="card-title">Chi tiết từng lần sửa chữa · 6 tháng</div></div>
+          <div style="display:flex;gap:6px">
+            <button id="filter-all"  class="btn btn-primary" style="font-size:11px;padding:4px 12px" onclick="filterRepair('all')">Tất cả</button>
+            <button id="filter-unpl" class="btn"             style="font-size:11px;padding:4px 12px" onclick="filterRepair('unplanned')">Đột xuất</button>
+            <button id="filter-pl"   class="btn"             style="font-size:11px;padding:4px 12px" onclick="filterRepair('planned')">Định kỳ</button>
+          </div>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>Xe</th><th>Biển số</th><th>Ngày</th><th>Loại</th><th>Nội dung</th><th>Chi phí (tr)</th><th>Nguyên nhân</th></tr></thead>
+          <tbody id="repair-detail-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Chi tiết theo từng xe · Tháng 3</div></div>
+        <table class="tbl">
+          <thead><tr><th>Xe</th><th>Biển số</th><th>Trạng thái</th><th>Km</th><th>Xăng</th><th>Cầu đường</th><th>Định kỳ</th><th>Đột xuất</th><th>Tổng SC</th><th>% tổng</th></tr></thead>
+          <tbody id="cost-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ĐÁNH GIÁ -->
+    <div class="pane" id="pane-danhgia">
+      <div class="kpi-grid" style="margin-bottom:16px">
+        <div class="kpi"><div class="kpi-accent" style="background:#EF9F27"></div>
+          <div class="kpi-label">Điểm TB toàn đội</div>
+          <div class="kpi-value" style="color:#0F6E56">4.6 <span style="font-size:16px;color:#EF9F27">★</span></div>
+          <div class="kpi-sub">72 đánh giá tháng 3</div>
+        </div>
+        <div class="kpi"><div class="kpi-accent" style="background:#1D9E75"></div>
+          <div class="kpi-label">Tỉ lệ 5 sao</div>
+          <div class="kpi-value">63%</div>
+          <div class="kpi-trend up">45 / 72 chuyến</div>
+        </div>
+        <div class="kpi"><div class="kpi-accent" style="background:#E24B4A"></div>
+          <div class="kpi-label">Hủy không báo</div>
+          <div class="kpi-value" style="color:#a32d2d">7</div>
+          <div class="kpi-sub">lần trong tháng</div>
+        </div>
+        <div class="kpi"><div class="kpi-accent" style="background:#7F77DD"></div>
+          <div class="kpi-label">Đúng giờ</div>
+          <div class="kpi-value">91%</div>
+          <div class="kpi-sub">76 / 84 chuyến</div>
+        </div>
+      </div>
+      <div class="grid3" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Phân bổ sao đánh giá</div></div>
+          <div style="position:relative;height:180px"><canvas id="chartStar"></canvas></div>
+          <div class="tags">
+            <span class="badge b-green">Đúng giờ</span>
+            <span class="badge b-green">Xe sạch</span>
+            <span class="badge b-green">Thái độ tốt</span>
+            <span class="badge b-amber">Đón hơi trễ</span>
+            <span class="badge b-amber">Điều hòa yếu</span>
+            <span class="badge b-red">Hủy chuyến</span>
+          </div>
+        </div>
+        <div class="card" style="grid-column:span 2">
+          <div class="card-header"><div class="card-title">Đánh giá theo lái xe</div></div>
+          <div id="driver-list"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Nhật trình sử dụng theo đơn vị</div>
+          <span class="badge b-red">7 lần hủy không báo</span>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>Đơn vị</th><th>Chuyến đặt</th><th>Thực dùng</th><th>Hủy</th><th>Km</th><th>Đánh giá</th><th>Ghi chú</th></tr></thead>
+          <tbody id="usage-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- HIỆU QUẢ XE -->
+    <div class="pane" id="pane-hieuqua">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><div class="card-title">Hiệu quả từng xe · Tháng 3</div></div>
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Xe</th><th>Biển số</th><th>Điều động</th>
+                <th>Chuyến / tối đa</th><th>Tỉ lệ SD</th>
+                <th>Tổng km</th><th>Km đến kỳ BD</th>
+                <th>Tình trạng BD</th><th>Đột xuất</th><th>Đánh giá</th>
+              </tr>
+            </thead>
+            <tbody id="xe-perf-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">Tỉ lệ sử dụng từng xe</div><div class="card-sub">% chuyến / công suất tối đa T3</div></div></div>
+          <div style="position:relative;height:200px"><canvas id="chartUtil"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">Kế hoạch bảo dưỡng</div><div class="card-sub">Theo km tích lũy</div></div></div>
+          <div id="maint-list"></div>
+        </div>
+      </div>
+      <div class="card mt16">
+        <div class="card-header">
+          <div class="card-title">Lịch sử sửa chữa · 6 tháng gần nhất</div>
+          <span class="badge b-amber">3 xe có đột xuất</span>
+        </div>
+        <table class="tbl">
+          <thead><tr><th>Xe</th><th>Biển số</th><th>Loại</th><th>Ngày</th><th>Chi phí (tr)</th><th>Nội dung</th><th>Phân loại</th></tr></thead>
+          <tbody id="repair-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+var XE = [
+  {bs:'51G-123.45', name:'Innova',  status:'active', km:1820, xang:14.2, cau:5.8,  suaP:3.2, suaU:0},
+  {bs:'51G-678.90', name:'Camry',   status:'active', km:1540, xang:12.1, cau:4.9,  suaP:0,   suaU:0},
+  {bs:'51G-234.56', name:'Transit', status:'active', km:2100, xang:18.5, cau:7.2,  suaP:0,   suaU:0},
+  {bs:'51G-345.67', name:'Innova',  status:'free',   km:1620, xang:13.0, cau:5.1,  suaP:0,   suaU:10.2},
+  {bs:'51G-456.78', name:'Camry',   status:'free',   km:1890, xang:15.8, cau:6.3,  suaP:0,   suaU:5.5},
+  {bs:'51G-567.89', name:'Transit', status:'free',   km:1730, xang:11.4, cau:4.7,  suaP:4.0, suaU:0},
+  {bs:'51G-789.01', name:'Innova',  status:'maint',  km:1640, xang:9.0,  cau:4.0,  suaP:0,   suaU:7.7},
+];
+for (var i = 0; i < XE.length; i++) {
+  XE[i].sua   = XE[i].suaP + XE[i].suaU;
+  XE[i].total = XE[i].xang + XE[i].cau + XE[i].sua;
+}
+var TOTAL = 0;
+for (var i = 0; i < XE.length; i++) { TOTAL += XE[i].total; }
+
+var PERF = [
+  {bs:'51G-123.45', name:'Innova',  trips:22, maxTrips:28, km:1820, score:4.8, maintKm:9800,  nextKm:10000, lastMaint:'05/01', status:'warn'},
+  {bs:'51G-678.90', name:'Camry',   trips:19, maxTrips:28, km:1540, score:4.7, maintKm:7200,  nextKm:10000, lastMaint:'10/02', status:'ok'},
+  {bs:'51G-234.56', name:'Transit', trips:24, maxTrips:28, km:2100, score:4.5, maintKm:5100,  nextKm:10000, lastMaint:'15/01', status:'ok'},
+  {bs:'51G-345.67', name:'Innova',  trips:16, maxTrips:28, km:1620, score:4.4, maintKm:11200, nextKm:10000, lastMaint:'20/10', status:'over'},
+  {bs:'51G-456.78', name:'Camry',   trips:18, maxTrips:28, km:1890, score:4.2, maintKm:8600,  nextKm:10000, lastMaint:'18/12', status:'warn'},
+  {bs:'51G-567.89', name:'Transit', trips:20, maxTrips:28, km:1730, score:4.6, maintKm:3400,  nextKm:10000, lastMaint:'01/03', status:'ok'},
+  {bs:'51G-789.01', name:'Innova',  trips:10, maxTrips:28, km:1640, score:3.9, maintKm:9600,  nextKm:10000, lastMaint:'12/11', status:'over'},
+];
+
+var REPAIR_DETAIL = [
+  {bs:'51G-345.67', name:'Innova',  date:'08/01/2026', unplanned:true,  cost:6.0, note:'Thay má phanh trước',      cause:'Mòn sớm – quá tải'},
+  {bs:'51G-345.67', name:'Innova',  date:'14/02/2026', unplanned:true,  cost:4.2, note:'Sửa điện – relay hỏng',    cause:'Lỗi linh kiện'},
+  {bs:'51G-789.01', name:'Innova',  date:'05/01/2026', unplanned:true,  cost:2.8, note:'Thay lốp dự phòng',        cause:'Lốp mòn, không thay đúng kỳ'},
+  {bs:'51G-789.01', name:'Innova',  date:'20/02/2026', unplanned:true,  cost:3.1, note:'Sửa điều hoà',             cause:'Hỏng tụ điện'},
+  {bs:'51G-789.01', name:'Innova',  date:'12/03/2026', unplanned:true,  cost:1.8, note:'Thay lọc gió + gạt mưa',   cause:'Quá hạn không phát hiện'},
+  {bs:'51G-456.78', name:'Camry',   date:'18/02/2026', unplanned:true,  cost:5.5, note:'Thay giảm xóc trước',      cause:'Đường xấu – không kiểm tra đúng kỳ'},
+  {bs:'51G-123.45', name:'Innova',  date:'05/01/2026', unplanned:false, cost:3.2, note:'Thay dầu + lọc nhớt',      cause:'Đúng chu kỳ 5.000 km'},
+  {bs:'51G-567.89', name:'Transit', date:'01/03/2026', unplanned:false, cost:4.0, note:'Bảo dưỡng 10.000 km',      cause:'Theo kế hoạch định kỳ'},
+];
+
+var DRIVERS = [
+  {name:'Nguyễn Văn A', trips:18, score:4.8},
+  {name:'Trần Văn B',   trips:16, score:4.7},
+  {name:'Lê Văn C',     trips:15, score:4.5},
+  {name:'Phạm Văn D',   trips:14, score:4.4},
+  {name:'Võ Văn E',     trips:11, score:4.2},
+  {name:'Hoàng Văn F',  trips:10, score:3.9},
+];
+
+var UNITS = [
+  {u:'P. KHTH',    b:12, d:11, c:1, km:1820, s:4.8},
+  {u:'TGĐ Office', b:10, d:10, c:0, km:2100, s:4.9},
+  {u:'P. TCKT',    b:9,  d:8,  c:1, km:1540, s:4.5},
+  {u:'Ban QL',     b:8,  d:7,  c:1, km:1230, s:4.6},
+  {u:'P. HCNS',    b:7,  d:6,  c:1, km:980,  s:4.3},
+  {u:'P. KTXD',    b:6,  d:4,  c:2, km:750,  s:3.8},
+  {u:'P. KHCN',    b:5,  d:3,  c:2, km:620,  s:3.9},
+];
+
+var CAL = {
+  3:[{u:'P.KHTH'},{u:'TGĐ'}], 5:[{u:'P.TCKT'}],
+  10:[{u:'Ban QL'},{u:'P.HCNS'},{u:'P.KTXD'}], 12:[{u:'P.KHTH'}],
+  17:[{u:'TGĐ'},{u:'P.TCKT'}], 19:[{u:'P.KTXD'}],
+  24:[{u:'Ban QL'},{u:'P.HCNS'}], 26:[{u:'P.KHTH'}],
+  31:[{u:'P.KHTH', pending:true}],
+};
+
+var LICH = [
+  {ngay:'03/03', bs:'51G-123.45', name:'Innova',  phong:'P. KHTH',    nguoi:3, dest:'Sở Xây dựng',   status:'done'},
+  {ngay:'03/03', bs:'51G-678.90', name:'Camry',   phong:'TGĐ Office', nguoi:2, dest:'UBND TP',        status:'done'},
+  {ngay:'05/03', bs:'51G-234.56', name:'Transit', phong:'P. TCKT',    nguoi:8, dest:'Chi cục thuế',   status:'done'},
+  {ngay:'10/03', bs:'51G-345.67', name:'Innova',  phong:'Ban QL',     nguoi:4, dest:'Hà Nội – họp',  status:'done'},
+  {ngay:'10/03', bs:'51G-456.78', name:'Camry',   phong:'P. HCNS',    nguoi:2, dest:'Sở Nội vụ',     status:'done'},
+  {ngay:'10/03', bs:'51G-567.89', name:'Transit', phong:'P. KTXD',    nguoi:7, dest:'Công trường Q9', status:'done'},
+  {ngay:'12/03', bs:'51G-123.45', name:'Innova',  phong:'P. KHTH',    nguoi:3, dest:'Bộ Xây dựng',   status:'done'},
+  {ngay:'17/03', bs:'51G-678.90', name:'Camry',   phong:'TGĐ Office', nguoi:1, dest:'Sân bay TSN',   status:'done'},
+  {ngay:'17/03', bs:'51G-345.67', name:'Innova',  phong:'P. TCKT',    nguoi:5, dest:'Kho bạc NN',    status:'done'},
+  {ngay:'19/03', bs:'51G-234.56', name:'Transit', phong:'P. KTXD',    nguoi:9, dest:'Công trường Q7', status:'done'},
+  {ngay:'24/03', bs:'51G-456.78', name:'Camry',   phong:'Ban QL',     nguoi:2, dest:'Hội nghị TW',   status:'done'},
+  {ngay:'24/03', bs:'51G-567.89', name:'Transit', phong:'P. HCNS',    nguoi:6, dest:'KCN Bình Dương', status:'done'},
+  {ngay:'26/03', bs:'51G-123.45', name:'Innova',  phong:'P. KHTH',    nguoi:3, dest:'Viện KT XD',    status:'done'},
+  {ngay:'28/03', bs:'51G-678.90', name:'Camry',   phong:'TGĐ Office', nguoi:2, dest:'Đà Nẵng – công tác', status:'done'},
+  {ngay:'30/03', bs:'51G-234.56', name:'Transit', phong:'P. KTXD',    nguoi:8, dest:'Công trường Q9', status:'active'},
+  {ngay:'30/03', bs:'51G-345.67', name:'Innova',  phong:'Ban QL',     nguoi:3, dest:'UBND TP',        status:'active'},
+  {ngay:'30/03', bs:'51G-456.78', name:'Camry',   phong:'P. HCNS',    nguoi:2, dest:'Sở Nội vụ',     status:'active'},
+  {ngay:'31/03', bs:'51G-123.45', name:'Innova',  phong:'P. KHTH',    nguoi:4, dest:'Bộ Xây dựng',   status:'pending'},
+];
+
+var TRIPS_BY_DAY = {
+  3:2, 5:1, 7:1, 10:3, 12:1, 14:2, 17:2, 19:1, 21:1, 24:2, 26:1, 28:1, 29:2, 30:3, 31:1
+};
+
+function renderLichTable() {
+  var filterXe    = document.getElementById('filter-xe-day').value;
+  var filterPhong = document.getElementById('filter-phong-day').value;
+  var statusMap   = {done:'b-green', active:'b-blue', pending:'b-amber'};
+  var statusLbl   = {done:'Hoàn tất', active:'Đang chạy', pending:'Chờ duyệt'};
+  var html = '';
+  for (var i = 0; i < LICH.length; i++) {
+    var r = LICH[i];
+    if (filterXe    && r.bs    !== filterXe)    continue;
+    if (filterPhong && r.phong !== filterPhong) continue;
+    html += '<tr>' +
+      '<td style="font-weight:500;white-space:nowrap">' + r.ngay + '</td>' +
+      '<td>' + r.name + '</td>' +
+      '<td style="color:#888780;font-size:12px">' + r.bs + '</td>' +
+      '<td style="font-weight:500">' + r.phong + '</td>' +
+      '<td style="text-align:center">' +
+        '<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#f1efe8;font-size:12px;font-weight:600">' + r.nguoi + '</span>' +
+      '</td>' +
+      '<td style="font-size:12px;color:#444">' + r.dest + '</td>' +
+      '<td><span class="badge ' + statusMap[r.status] + '">' + statusLbl[r.status] + '</span></td>' +
+      '</tr>';
+  }
+  document.getElementById('lich-detail-tbody').innerHTML = html || '<tr><td colspan="7" style="text-align:center;color:#888780;padding:20px">Không có dữ liệu</td></tr>';
+}
+
+function buildTripsChart() {
+  var days = [], counts = [];
+  for (var d = 1; d <= 31; d++) {
+    days.push(d);
+    counts.push(TRIPS_BY_DAY[d] || 0);
+  }
+  var colors = counts.map(function(v) { return v >= 3 ? '#E24B4A' : v >= 2 ? '#EF9F27' : v === 1 ? '#378ADD' : '#f1efe8'; });
+  new Chart(document.getElementById('chartTripsDay'), {
+    type: 'bar',
+    data: { labels: days, datasets: [{data: counts, backgroundColor: colors, borderRadius: 3}] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { title: function(i) { return 'Ngày ' + i[0].label + '/03'; }, label: function(i) { return i.raw + ' chuyến'; } } }
+      },
+      scales: {
+        x: { ticks: { color: '#888780', font: { size: 10 } }, grid: { display: false } },
+        y: { ticks: { color: '#888780', font: { size: 11 }, stepSize: 1 }, grid: { color: 'rgba(0,0,0,.06)' }, min: 0, max: 4 }
+      }
+    }
+  });
+}
+
+function stars(n) {
+  var s = '', f = Math.floor(n), h = (n - f) >= 0.5;
+  for (var i = 0; i < f; i++) s += '<span class="s-full">★</span>';
+  if (h) s += '<span class="s-full" style="opacity:.4">★</span>';
+  for (var i = 0; i < 5 - Math.ceil(n); i++) s += '<span class="s-empty">★</span>';
+  return '<div class="star-row">' + s + '</div>';
+}
+
+function buildCal() {
+  var g = document.getElementById('cal-grid');
+
+  var tt = document.createElement('div');
+  tt.id = 'cal-tt';
+  tt.className = 'tt';
+  document.body.appendChild(tt);
+
+  function showTt(e, d) {
+    var trips = LICH.filter(function(r) { return r.ngay === (d < 10 ? '0'+d : d) + '/03'; });
+    if (!trips.length) return;
+    var html = '<div class="tt-title">Ngày ' + d + '/03/2026 · ' + trips.length + ' chuyến</div>';
+    for (var i = 0; i < trips.length; i++) {
+      var t = trips[i];
+      html += '<div style="margin-bottom:' + (i < trips.length-1 ? '8' : '0') + 'px">' +
+        '<div class="tt-row"><span class="tt-label">Xe</span><span class="tt-val">' + t.name + ' – ' + t.bs + '</span></div>' +
+        '<div class="tt-row"><span class="tt-label">Phòng</span><span class="tt-val">' + t.phong + '</span></div>' +
+        '<div class="tt-row"><span class="tt-label">Số người</span><span class="tt-val">' + t.nguoi + ' người</span></div>' +
+        '<div class="tt-row"><span class="tt-label">Điểm đến</span><span class="tt-val">' + t.dest + '</span></div>' +
+      '</div>';
+    }
+    tt.innerHTML = html;
+    tt.classList.add('show');
+    moveTt(e);
+  }
+  function moveTt(e) {
+    var x = e.clientX + 14, y = e.clientY - 10;
+    if (x + 270 > window.innerWidth)  x = e.clientX - 274;
+    if (y + tt.offsetHeight > window.innerHeight) y = e.clientY - tt.offsetHeight - 4;
+    tt.style.left = x + 'px';
+    tt.style.top  = y + 'px';
+  }
+  function hideTt() { tt.classList.remove('show'); }
+
+  for (var i = 0; i < 6; i++) {
+    var e = document.createElement('div'); e.className = 'cal-cell empty'; g.appendChild(e);
+  }
+  for (var d = 1; d <= 31; d++) {
+    var cell = document.createElement('div');
+    var hasTrips = LICH.filter(function(r){ var dd=d; return r.ngay === (dd<10?'0'+dd:dd)+'/03'; }).length > 0;
+    cell.className = 'cal-cell' + (d === 30 ? ' today' : '');
+    if (hasTrips) cell.style.cursor = 'pointer';
+    var trips = CAL[d] || [];
+    var html = '<div class="cal-day">' + d + '</div>';
+    for (var t = 0; t < Math.min(trips.length, 2); t++) {
+      html += '<div class="trip-pill ' + (trips[t].pending ? 'tp-amber' : 'tp-blue') + '">' + trips[t].u + '</div>';
+    }
+    if (trips.length > 2) html += '<div style="font-size:9px;color:#888780">+' + (trips.length-2) + '</div>';
+    cell.innerHTML = html;
+
+    (function(day, c) {
+      c.addEventListener('mouseenter', function(ev) { showTt(ev, day); });
+      c.addEventListener('mousemove',  function(ev) { moveTt(ev); });
+      c.addEventListener('mouseleave', hideTt);
+    })(d, cell);
+
+    g.appendChild(cell);
+  }
+}
+
+function buildXeStatus() {
+  var dotMap   = {active:'#1D9E75', free:'#378ADD', maint:'#E24B4A'};
+  var badgeMap = {active:'b-blue',  free:'b-green', maint:'b-red'};
+  var lblMap   = {active:'Đang điều', free:'Sẵn sàng', maint:'Bảo dưỡng'};
+  var html = '';
+  for (var i = 0; i < XE.length; i++) {
+    var v = XE[i];
+    html += '<div class="xe-row">' +
+      '<span class="dot" style="background:' + dotMap[v.status] + '"></span>' +
+      '<span style="font-weight:500;font-size:12px;flex:1">' + v.bs + '</span>' +
+      '<span style="font-size:11px;color:#888780;margin-right:6px">' + v.name + '</span>' +
+      '<span class="badge ' + badgeMap[v.status] + '">' + lblMap[v.status] + '</span></div>';
+  }
+  document.getElementById('xe-status-list').innerHTML = html;
+}
+
+function buildCostTable() {
+  var badgeMap = {active:'b-blue', free:'b-green', maint:'b-red'};
+  var lblMap   = {active:'Điều động', free:'Sẵn sàng', maint:'Bảo dưỡng'};
+  var html = '';
+  for (var i = 0; i < XE.length; i++) {
+    var v = XE[i];
+    var pct  = Math.round(v.total / TOTAL * 100);
+    var pPct = Math.round(v.suaP / (v.total || 1) * 100);
+    var uPct = Math.round(v.suaU / (v.total || 1) * 100);
+    html += '<tr>' +
+      '<td style="font-weight:500">' + v.name + '</td>' +
+      '<td style="color:#888780;font-size:12px">' + v.bs + '</td>' +
+      '<td><span class="badge ' + badgeMap[v.status] + '">' + lblMap[v.status] + '</span></td>' +
+      '<td>' + v.km.toLocaleString('vi-VN') + '</td>' +
+      '<td>' + v.xang.toFixed(1) + '</td>' +
+      '<td>' + v.cau.toFixed(1) + '</td>' +
+      '<td style="color:#27500a">' + v.suaP.toFixed(1) + '</td>' +
+      '<td style="color:' + (v.suaU > 0 ? '#a32d2d' : '#888780') + ';font-weight:' + (v.suaU > 0 ? '500' : '400') + '">' + v.suaU.toFixed(1) + '</td>' +
+      '<td style="font-weight:500">' + v.sua.toFixed(1) + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:6px">' +
+        '<span style="font-size:11px;color:#888780;min-width:28px">' + pct + '%</span>' +
+        '<div style="flex:1;height:5px;background:#f1efe8;border-radius:3px;overflow:hidden;display:flex">' +
+          '<div style="width:' + pPct + '%;background:#1D9E75;height:100%"></div>' +
+          '<div style="width:' + uPct + '%;background:#E24B4A;height:100%"></div>' +
+        '</div></div></td></tr>';
+  }
+  document.getElementById('cost-tbody').innerHTML = html;
+}
+
+var repairFilter = 'all';
+function renderRepairTable() {
+  var html = '';
+  for (var i = 0; i < REPAIR_DETAIL.length; i++) {
+    var r = REPAIR_DETAIL[i];
+    if (repairFilter === 'unplanned' && !r.unplanned) continue;
+    if (repairFilter === 'planned'   &&  r.unplanned) continue;
+    html += '<tr>' +
+      '<td style="font-weight:500">' + r.name + '</td>' +
+      '<td style="color:#888780;font-size:12px">' + r.bs + '</td>' +
+      '<td style="color:#888780;font-size:12px">' + r.date + '</td>' +
+      '<td><span class="badge ' + (r.unplanned ? 'b-red' : 'b-green') + '">' + (r.unplanned ? 'Đột xuất' : 'Định kỳ') + '</span></td>' +
+      '<td style="font-size:12px">' + r.note + '</td>' +
+      '<td style="font-weight:500;color:' + (r.unplanned ? '#a32d2d' : '#1a1a18') + '">' + r.cost.toFixed(1) + '</td>' +
+      '<td style="font-size:12px;color:#888780">' + r.cause + '</td></tr>';
+  }
+  document.getElementById('repair-detail-tbody').innerHTML = html;
+}
+function filterRepair(f) {
+  repairFilter = f;
+  document.getElementById('filter-all').className  = 'btn';
+  document.getElementById('filter-unpl').className = 'btn';
+  document.getElementById('filter-pl').className   = 'btn';
+  document.getElementById(f === 'all' ? 'filter-all' : f === 'unplanned' ? 'filter-unpl' : 'filter-pl').className = 'btn btn-primary';
+  renderRepairTable();
+}
+
+function buildDriverList() {
+  var colors = ['#e6f1fb|#0c447c','#eaf3de|#27500a','#faeeda|#633806','#eeedfe|#3c3489','#e1f5ee|#085041','#faece7|#712b13'];
+  var html = '';
+  for (var i = 0; i < DRIVERS.length; i++) {
+    var d = DRIVERS[i];
+    var parts = colors[i % colors.length].split('|');
+    var initial = d.name.split(' ').pop()[0];
+    html += '<div class="driver-row">' +
+      '<div class="avatar" style="background:' + parts[0] + ';color:' + parts[1] + '">' + initial + '</div>' +
+      '<div style="flex:1"><div style="font-size:13px;font-weight:500">' + d.name + '</div>' +
+      '<div style="font-size:11px;color:#888780">' + d.trips + ' chuyến T3</div></div>' +
+      '<div style="text-align:right"><div style="font-size:14px;font-weight:600">' + d.score.toFixed(1) + '</div>' + stars(d.score) + '</div>' +
+      '<div style="margin-left:12px;width:80px"><div class="pbar"><div class="pfill" style="width:' + Math.round(d.score/5*100) + '%;background:#EF9F27"></div></div></div>' +
+      '</div>';
+  }
+  document.getElementById('driver-list').innerHTML = html;
+}
+
+function buildUsage() {
+  var html = '';
+  for (var i = 0; i < UNITS.length; i++) {
+    var u = UNITS[i];
+    html += '<tr>' +
+      '<td style="font-weight:500">' + u.u + '</td><td>' + u.b + '</td><td>' + u.d + '</td>' +
+      '<td>' + (u.c > 0 ? '<span class="badge ' + (u.c > 1 ? 'b-red' : 'b-amber') + '">' + u.c + '</span>' : '<span class="badge b-green">0</span>') + '</td>' +
+      '<td>' + u.km.toLocaleString('vi-VN') + '</td>' +
+      '<td>' + u.s.toFixed(1) + ' ' + stars(u.s) + '</td>' +
+      '<td style="color:#888780;font-size:12px">' + (u.c > 1 ? 'Cần nhắc nhở' : u.c === 1 ? 'Theo dõi' : 'Tốt') + '</td></tr>';
+  }
+  document.getElementById('usage-tbody').innerHTML = html;
+}
+
+function buildPerfTable() {
+  var el = document.getElementById('xe-perf-tbody');
+  if (!el) return;
+  var maintBadge = {ok:'b-green', warn:'b-amber', over:'b-red'};
+  var maintLabel = {ok:'Bình thường', warn:'Sắp đến kỳ', over:'Quá hạn'};
+  var dotMap     = {active:'#1D9E75', free:'#378ADD', maint:'#E24B4A'};
+  var badgeMap   = {active:'b-blue',  free:'b-green', maint:'b-red'};
+  var lblMap     = {active:'Điều động', free:'Sẵn sàng', maint:'Bảo dưỡng'};
+  var html = '';
+  for (var i = 0; i < PERF.length; i++) {
+    var v = PERF[i];
+    var xeRow = null;
+    for (var j = 0; j < XE.length; j++) { if (XE[j].bs === v.bs) { xeRow = XE[j]; break; } }
+    var util   = Math.round(v.trips / v.maxTrips * 100);
+    var kmLeft = v.nextKm - v.maintKm;
+    var kmPct  = Math.min(100, Math.round(v.maintKm / v.nextKm * 100));
+    var rep    = XE_REPAIRS[v.bs] || 0;
+    var utilColor = util >= 70 ? '#1D9E75' : util >= 50 ? '#EF9F27' : '#E24B4A';
+    var maintColor = v.status === 'over' ? '#E24B4A' : v.status === 'warn' ? '#EF9F27' : '#1D9E75';
+    var scoreColor = v.score >= 4.5 ? '#0F6E56' : v.score >= 4.0 ? '#854F0B' : '#a32d2d';
+    var st = xeRow ? xeRow.status : 'free';
+    html += '<tr>' +
+      '<td style="font-weight:500">' + v.name + '</td>' +
+      '<td style="color:#888780;font-size:12px">' + v.bs + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:5px"><span class="dot" style="background:' + dotMap[st] + '"></span><span class="badge ' + badgeMap[st] + '">' + lblMap[st] + '</span></div></td>' +
+      '<td>' + v.trips + ' / ' + v.maxTrips + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:7px"><span style="font-weight:500;min-width:30px">' + util + '%</span>' +
+        '<div style="width:64px"><div class="pbar"><div class="pfill" style="width:' + util + '%;background:' + utilColor + '"></div></div></div></div></td>' +
+      '<td>' + v.km.toLocaleString('vi-VN') + ' km</td>' +
+      '<td><div style="display:flex;align-items:center;gap:7px">' +
+        '<span style="font-size:12px;min-width:44px">' + (v.maintKm/1000).toFixed(1) + 'k km</span>' +
+        '<div style="width:64px"><div class="pbar"><div class="pfill" style="width:' + kmPct + '%;background:' + maintColor + '"></div></div></div></div></td>' +
+      '<td><span class="badge ' + maintBadge[v.status] + '">' + maintLabel[v.status] + '</span>' +
+        (v.status === 'over' ? '<div style="font-size:10px;color:#a32d2d;margin-top:2px">Quá ' + Math.abs(kmLeft).toLocaleString() + ' km</div>' :
+         v.status === 'warn' ? '<div style="font-size:10px;color:#854F0B;margin-top:2px">Còn ' + kmLeft.toLocaleString() + ' km</div>' : '') + '</td>' +
+      '<td>' + (rep > 0 ? '<span class="badge b-red">' + rep + ' lần</span>' : '<span class="badge b-green">0</span>') + '</td>' +
+      '<td style="font-weight:500;color:' + scoreColor + '">' + v.score.toFixed(1) + ' <span style="color:#EF9F27">★</span></td>' +
+      '</tr>';
+  }
+  el.innerHTML = html;
+}
+
+function buildMaintList() {
+  var cfg = {ok:{c:'#1D9E75',bg:'#eaf3de',l:'Bình thường'}, warn:{c:'#854F0B',bg:'#faeeda',l:'Sắp đến kỳ'}, over:{c:'#791f1f',bg:'#fcebeb',l:'Quá hạn'}};
+  var html = '';
+  for (var i = 0; i < PERF.length; i++) {
+    var v = PERF[i], p = cfg[v.status];
+    var kmLeft = v.nextKm - v.maintKm;
+    var pct = Math.min(100, Math.round(v.maintKm / v.nextKm * 100));
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid rgba(0,0,0,.06)">' +
+      '<div style="width:36px;height:36px;border-radius:8px;background:' + p.bg + ';display:flex;align-items:center;justify-content:center;flex-shrink:0">' +
+        '<span style="font-size:13px;color:' + p.c + ';font-weight:600">' + v.name[0] + '</span></div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:12px;font-weight:500">' + v.bs + '</div>' +
+        '<div class="pbar" style="margin-top:4px"><div class="pfill" style="width:' + pct + '%;background:' + p.c + '"></div></div>' +
+        '<div style="font-size:10px;color:#888780;margin-top:2px">' + (v.maintKm/1000).toFixed(1) + 'k / ' + (v.nextKm/1000).toFixed(0) + 'k km</div>' +
+      '</div>' +
+      '<div style="text-align:right;flex-shrink:0">' +
+        '<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;background:' + p.bg + ';color:' + p.c + '">' + p.l + '</span>' +
+        '<div style="font-size:10px;color:#888780;margin-top:3px">' + (v.status === 'over' ? 'Quá ' + Math.abs(kmLeft).toLocaleString() + ' km' : kmLeft.toLocaleString() + ' km còn') + '</div>' +
+      '</div></div>';
+  }
+  document.getElementById('maint-list').innerHTML = html;
+}
+
+function buildRepairs() {
+  var html = '';
+  for (var i = 0; i < REPAIR_DETAIL.length; i++) {
+    var r = REPAIR_DETAIL[i];
+    html += '<tr>' +
+      '<td style="font-weight:500">' + r.name + '</td>' +
+      '<td style="color:#888780;font-size:12px">' + r.bs + '</td>' +
+      '<td><span class="badge ' + (r.unplanned ? 'b-red' : 'b-blue') + '">' + (r.unplanned ? 'Đột xuất' : 'Định kỳ') + '</span></td>' +
+      '<td style="font-size:12px">' + r.date + '</td>' +
+      '<td style="font-weight:500">' + r.cost.toFixed(1) + '</td>' +
+      '<td style="font-size:12px">' + r.note + '</td>' +
+      '<td style="font-size:11px;color:' + (r.unplanned ? '#791f1f' : '#27500a') + '">' + (r.unplanned ? 'Ngoài kế hoạch' : 'Theo kế hoạch') + '</td></tr>';
+  }
+  document.getElementById('repair-tbody').innerHTML = html;
+}
+
+var chartsBuilt = false;
+function buildCharts() {
+  if (chartsBuilt) return;
+  chartsBuilt = true;
+  var grid = 'rgba(0,0,0,.06)', tick = '#888780';
+
+  new Chart(document.getElementById('chartCost'), {
+    type:'bar',
+    data:{labels:['T10','T11','T12','T1','T2','T3'],datasets:[
+      {label:'Xăng',     data:[82,88,91,85,90,94], backgroundColor:'#378ADD',borderRadius:3},
+      {label:'Cầu đường',data:[32,35,37,33,36,38], backgroundColor:'#1D9E75',borderRadius:3},
+      {label:'Sửa chữa', data:[20,28,15,40,35,50], backgroundColor:'#D85A30',borderRadius:3},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{stacked:true,ticks:{color:tick,font:{size:11}},grid:{color:grid}},
+              y:{stacked:true,ticks:{color:tick,font:{size:11},callback:function(v){return v+'tr'}},grid:{color:grid}}}}
+  });
+
+  new Chart(document.getElementById('chartDonut'), {
+    type:'doughnut',
+    data:{labels:['Xăng','Cầu đường','Sửa chữa'],datasets:[{data:[94,38,50],backgroundColor:['#378ADD','#1D9E75','#D85A30'],borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}
+  });
+
+  new Chart(document.getElementById('chartRepairTrend'), {
+    type:'bar',
+    data:{labels:['T10','T11','T12','T1','T2','T3'],datasets:[
+      {label:'Định kỳ', data:[8,6,7,7,6,7],    backgroundColor:'#1D9E75',borderRadius:3},
+      {label:'Đột xuất',data:[12,22,8,14,29,43],backgroundColor:'#E24B4A',borderRadius:3},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{stacked:true,ticks:{color:tick,font:{size:11}},grid:{color:grid}},
+              y:{stacked:true,ticks:{color:tick,font:{size:11},callback:function(v){return v+'tr'}},grid:{color:grid}}}}
+  });
+
+  new Chart(document.getElementById('chartRepairByXe'), {
+    type:'bar',
+    data:{
+      labels:['123.45','678.90','234.56','345.67','456.78','567.89','789.01'],
+      datasets:[
+        {label:'Định kỳ', data:[3.2,0,0,0,0,4,0],  backgroundColor:'#1D9E75',borderRadius:3},
+        {label:'Đột xuất',data:[0,0,0,10.2,5.5,0,7.7],backgroundColor:'#E24B4A',borderRadius:3},
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{stacked:true,ticks:{color:tick,font:{size:10}},grid:{color:grid}},
+              y:{stacked:true,ticks:{color:tick,font:{size:11},callback:function(v){return v+'tr'}},grid:{color:grid}}}}
+  });
+
+  new Chart(document.getElementById('chartStar'), {
+    type:'bar',
+    data:{labels:['5 ★','4 ★','3 ★','2 ★','1 ★'],datasets:[{data:[45,18,6,2,1],backgroundColor:['#1D9E75','#378ADD','#EF9F27','#D85A30','#E24B4A'],borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:tick,font:{size:11}},grid:{color:grid}},y:{ticks:{color:tick,font:{size:11}},grid:{display:false}}}}
+  });
+
+  new Chart(document.getElementById('chartUtil'), {
+    type:'bar',
+    data:{
+      labels:['123.45','678.90','234.56','345.67','456.78','567.89','789.01'],
+      datasets:[{
+        data:[79,68,86,57,64,71,36],
+        backgroundColor:['#1D9E75','#EF9F27','#1D9E75','#E24B4A','#EF9F27','#1D9E75','#E24B4A'],
+        borderRadius:4
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:tick,font:{size:10}},grid:{color:grid}},
+              y:{min:0,max:100,ticks:{color:tick,font:{size:11},callback:function(v){return v+'%'}},grid:{color:grid}}}}
+  });
+}
+
+function switchTab(id, btn) {
+  var panes = document.querySelectorAll('.pane');
+  for (var i = 0; i < panes.length; i++) panes[i].classList.remove('active');
+  var btns = document.querySelectorAll('.tab, .nav-item');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  document.getElementById('pane-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  var tabBtn = document.getElementById('t-' + id);
+  if (tabBtn) tabBtn.classList.add('active');
+  if (id === 'chiphi' || id === 'danhgia' || id === 'hieuqua') setTimeout(buildCharts, 30);
+  if (id === 'hieuqua') buildPerfTable();
+}
+
+buildCal();
+buildXeStatus();
+buildCostTable();
+renderRepairTable();
+buildDriverList();
+buildUsage();
+buildMaintList();
+buildRepairs();
+setTimeout(buildTripsChart, 30);
+</script>
+</body>
+</html>
